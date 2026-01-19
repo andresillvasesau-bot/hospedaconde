@@ -5,7 +5,6 @@
 <title>HospedaConde | Turismo & Hospedagem</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-/* ==== TODO SEU CSS ORIGINAL — MANTIDO ==== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 body{ font-family:'Inter',sans-serif; background:#f3f6fb; color:#222; }
@@ -50,7 +49,6 @@ footer{ background:#0d1b2a; color:#ccc; text-align:center; padding:20px; font-si
 </head>
 <body>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -66,6 +64,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+window.db = db;
 </script>
 <header>
 <h1 id="txtTitulo">
@@ -283,22 +282,26 @@ function pagarPix(){ pagamentoDetalhe.innerHTML="<p>QR Code PIX</p><img src='htt
 function pagarCartao(){ pagamentoDetalhe.innerHTML="<input placeholder='Número do cartão'><input placeholder='Nome no cartão'><button onclick=\"alert('Pagamento aprovado!')\">Finalizar</button>"; }
 
 // ==== HOTÉIS ====
-function adicionarHotelNaLista(h){
+function iniciarListenerHoteis(){
 
-  let card = document.createElement("div");
-  card.className = "card";
+  db.collection("hoteisCadastrados")
+   .onSnapshot((querySnapshot)=>{
 
-  card.innerHTML = `
-    <img src="${h.imagem}">
-    <div class="card-content">
-      <h3>${h.nome}</h3>
-      <p class="price">R$ ${h.preco} / noite</p>
-      <button onclick="openModal('${h.nome}',${h.preco})">Reservar</button>
-      <button onclick="abrirDetalheHotel('${h.nome}','${h.imagem}','${h.quartos}','${h.beneficios}')">Ver detalhes</button>
-    </div>
-  `;
+      listaHoteis.innerHTML = "";
+      listaExcluirHotel.innerHTML = "";
 
-  listaHoteis.appendChild(card);
+      querySnapshot.forEach((doc)=>{
+          let h = doc.data();
+          h.id = doc.id;
+          adicionarHotelNaLista(h);
+
+          let opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.text = h.nome;
+          listaExcluirHotel.add(opt);
+      });
+
+   });
 }
 
 function cadastrarHotel(){
@@ -340,7 +343,6 @@ function salvarHotelFirebase(nome,preco,quartos,beneficios,imagem){
       imagem:imagem
   }).then(()=>{
       msgCadastro.innerText = "Hotel cadastrado com sucesso!";
-      carregarHoteisFirebase();
   }).catch((erro)=>{
       msgCadastro.innerText = "Erro: "+erro;
   });
@@ -439,12 +441,11 @@ function salvarLogo(){
     };
     r.readAsDataURL(file);
 }
-
-// ==== CARREGAR SALVOS AO ABRIR ====
+ 
 // ==== CARREGAR SALVOS AO ABRIR ====
 window.onload = function(){
 
-    // Textos e logo
+    // textos e logo
     let logoSalva = localStorage.getItem("logoSite"); 
     if(logoSalva){
         logoTopo.src = logoSalva; 
@@ -459,7 +460,7 @@ window.onload = function(){
     if(localStorage.getItem("txtRodape")) txtRodape.innerText = localStorage.getItem("txtRodape");
 
     carregarTurismoSalvo();
-    carregarHoteisFirebase();
+    iniciarListenerHoteis(); 
 };
 
 </script>
