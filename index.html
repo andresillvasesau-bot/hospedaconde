@@ -405,7 +405,7 @@ window.onload=function(){
     if(localStorage.getItem("txtRodape")) txtRodape.innerText=localStorage.getItem("txtRodape");
 
     // HOTÉIS
-    let hoteis=JSON.parse(localStorage.getItem("hoteisCadastrados")||"[]"); listaHoteis.innerHTML=''; hoteis.forEach(h=>adicionarHotelNaLista(h)); atualizarListaExcluirHotel();
+carregarHoteisFirebase();
 
     // TURISMO
     carregarTurismoSalvo();
