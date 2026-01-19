@@ -244,7 +244,22 @@ function openTab(id){document.querySelectorAll('section').forEach(s=>s.classList
 function buscarHospedagem(){ if(!destinoBusca.value||!checkin.value||!checkout.value){msgBusca.innerText="Preencha destino e datas."; return;} msgBusca.innerText="Buscando hospedagens..."; openTab('hoteis'); }
 
 // ==== LOGIN PREFEITURA ====
-function login(){ if(user.value==='prefeitura' && pass.value==='123456'){ gerarDashboard(); openTab('dashboard'); } else alert("Usuário ou senha inválidos"); }
+function login(){ 
+   if(user.value==='prefeitura' && pass.value==='123456'){ 
+
+      // 🔥 garante que Firebase já carregou
+      const esperarDB = setInterval(()=>{
+         if(window.db){
+            clearInterval(esperarDB);
+            gerarDashboard();
+            openTab('dashboard');
+         }
+      },100);
+
+   } else {
+      alert("Usuário ou senha inválidos");
+   }
+}
 
 // ==== MODAL RESERVA ====
 let precoAtual=0, totalCalculado=0;
