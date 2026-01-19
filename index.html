@@ -271,100 +271,134 @@ function pagarCartao(){ pagamentoDetalhe.innerHTML="<input placeholder='Número 
 
 // ==== HOTÉIS ====
 function adicionarHotelNaLista(h){
-    let card=document.createElement('div'); card.className='card';
-    card.innerHTML=`<img src="${h.imagem}"><div class="card-content"><h3 style="cursor:pointer;color:#0071c2" onclick="abrirDetalheHotel('${h.nome}','${h.imagem}','${h.quartos}','${h.beneficios}')">${h.nome}</h3><p class="price">R$ ${h.preco} / noite</p><button onclick="openModal('${h.nome}',${h.preco})">Simular reserva</button></div>`;
-    listaHoteis.appendChild(card);
+
+  let card = document.createElement("div");
+  card.className = "card";
+
+  card.innerHTML = `
+    <img src="${h.imagem}">
+    <div class="card-content">
+      <h3>${h.nome}</h3>
+      <p class="price">R$ ${h.preco} / noite</p>
+      <button onclick="openModal('${h.nome}',${h.preco})">Reservar</button>
+      <button onclick="abrirDetalheHotel('${h.nome}','${h.imagem}','${h.quartos}','${h.beneficios}')">Ver detalhes</button>
+    </div>
+  `;
+
+  listaHoteis.appendChild(card);
 }
-<script>
 
-function cadastrarHotel() {
+function cadastrarHotel(){
 
-  const hotel = {
-    nome: document.getElementById("nomeHotel").value,
-    preco: document.getElementById("precoHotel").value,
-    vagas: document.getElementById("vagasHotel").value,
-    beneficios: document.getElementById("beneficiosHotel").value,
-    imagem: document.getElementById("linkImagem").value || ""
-  };
+  let nome = document.getElementById("hotelNomeCad").value;
+  let preco = document.getElementById("hotelPreco").value;
+  let quartos = document.getElementById("hotelQuartos").value;
+  let beneficios = document.getElementById("hotelBeneficios").value;
+  let imagemLink = document.getElementById("hotelImagemLink").value;
 
-  window.db.collection("hoteis").add(hotel)
-    .then(()=> {
-        alert("Hotel cadastrado com sucesso!");
-        carregarHoteisFirebase();
-    })
-    .catch((erro)=>{
-        alert("Erro ao cadastrar: " + erro);
+  let file = document.getElementById("hotelImagemUpload").files[0];
+
+  if(!nome || !preco){
+    msgCadastro.innerText = "Preencha nome e preço";
+    return;
+  }
+
+  if(file){
+     let reader = new FileReader();
+     reader.onload = function(e){
+        salvarHotelFirebase(nome,preco,quartos,beneficios,e.target.result);
+     }
+     reader.readAsDataURL(file);
+  } else {
+     salvarHotelFirebase(
+       nome,preco,quartos,beneficios,
+       imagemLink || "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg"
+     );
+  }
+}
+
+function salvarHotelFirebase(nome,preco,quartos,beneficios,imagem){
+
+  db.collection("hoteisCadastrados").add({
+      nome:nome,
+      preco:preco,
+      quartos:quartos,
+      beneficios:beneficios,
+      imagem:imagem
+  }).then(()=>{
+      msgCadastro.innerText = "Hotel cadastrado com sucesso!";
+      carregarHoteisFirebase();
+  }).catch((erro)=>{
+      msgCadastro.innerText = "Erro: "+erro;
+  });
+}
+
+function carregarHoteisFirebase(){
+
+  listaHoteis.innerHTML = "";
+  listaExcluirHotel.innerHTML = "";
+
+  db.collection("hoteisCadastrados").get().then((querySnapshot)=>{
+
+    querySnapshot.forEach((doc)=>{
+        let h = doc.data();
+        h.id = doc.id;
+        adicionarHotelNaLista(h);
+
+        let opt = document.createElement("option");
+        opt.value = doc.id;
+        opt.text = h.nome;
+        listaExcluirHotel.add(opt);
     });
-}
-async function salvarHotel(nome, preco, quartos, beneficios, imagem){
-  await addDoc(collection(db, "hoteisCadastrados"), {
-    nome,
-    preco,
-    quartos,
-    beneficios,
-    imagem
-  });
 
-  adicionarHotelNaLista({nome, preco, quartos, beneficios, imagem});
-  msgCadastro.innerText = "Hotel cadastrado com sucesso!";
-  atualizarListaExcluirHotel();
-}
-
-async function carregarHoteisFirebase(){
-  listaHoteis.innerHTML = '';
-  listaExcluirHotel.innerHTML = '';
-
-  const querySnapshot = await getDocs(collection(db, "hoteisCadastrados"));
-
-  querySnapshot.forEach((docu)=>{
-     let h = docu.data();
-     h.id = docu.id;
-     adicionarHotelNaLista(h);
-
-     let opt = document.createElement("option");
-     opt.value = docu.id;
-     opt.text = h.nome;
-     listaExcluirHotel.add(opt);
   });
 }
 
-async function excluirHotelSelecionado(){
-   let id = listaExcluirHotel.value;
-   if(!id) return;
+function excluirHotelSelecionado(){
 
-   await deleteDoc(doc(db,"hoteisCadastrados",id));
+  let id = listaExcluirHotel.value;
+  if(!id) return;
 
-   msgExcluirHotel.innerText="Hotel excluído!";
-   carregarHoteisFirebase();
+  db.collection("hoteisCadastrados").doc(id).delete().then(()=>{
+      msgExcluirHotel.innerText = "Hotel excluído!";
+      carregarHoteisFirebase();
+  });
 }
 
-
-function abrirDetalheHotel(nome,img,q,b){ detHotelNome.innerText=nome; detHotelImg.src=img; detHotelQuartos.innerText=q||"Não informado"; detHotelBeneficios.innerText=b||"Não informado"; openTab('detalheHotel'); }
-
+function abrirDetalheHotel(nome,img,q,b){
+  detHotelNome.innerText=nome;
+  detHotelImg.src=img;
+  detHotelQuartos.innerText=q||"Não informado";
+  detHotelBeneficios.innerText=b||"Não informado";
+  openTab('detalheHotel');
+}
+  
 // ==== DASHBOARD ====
-async function gerarDashboard(){
+function gerarDashboard(){
+
    dashConteudo.innerHTML = '';
 
-   const querySnapshot = await getDocs(collection(db,"hoteisCadastrados"));
+   db.collection("hoteisCadastrados").get().then((querySnapshot)=>{
 
-   querySnapshot.forEach((docu)=>{
-      let h = docu.data();
+      querySnapshot.forEach((docu)=>{
+         let h = docu.data();
 
-      // (mantém exatamente seu layout atual)
-      let reservas = Math.floor(Math.random()*20)+5;
-      let hospedes = Math.floor(Math.random()*60)+10;
-      let total = Math.floor(Math.random()*10000)+3000;
-      let repasse = (total*0.1).toFixed(2);
+         let reservas = Math.floor(Math.random()*20)+5;
+         let hospedes = Math.floor(Math.random()*60)+10;
+         let total = Math.floor(Math.random()*10000)+3000;
+         let repasse = (total*0.1).toFixed(2);
 
-      dashConteudo.innerHTML += `
-        <h3 style="margin-top:30px">${h.nome}</h3>
-        <div class="grid">
-          <div class="stat">📅 Reservas<br><strong>${reservas}</strong></div>
-          <div class="stat">👥 Hóspedes<br><strong>${hospedes}</strong></div>
-          <div class="stat">💰 Total<br><strong>R$ ${total}</strong></div>
-          <div class="stat">🏛️ Repasse Prefeitura<br><strong>R$ ${repasse}</strong></div>
-        </div>
-      `;
+         dashConteudo.innerHTML += `
+           <h3 style="margin-top:30px">${h.nome}</h3>
+           <div class="grid">
+             <div class="stat">📅 Reservas<br><strong>${reservas}</strong></div>
+             <div class="stat">👥 Hóspedes<br><strong>${hospedes}</strong></div>
+             <div class="stat">💰 Total<br><strong>R$ ${total}</strong></div>
+             <div class="stat">🏛️ Repasse Prefeitura<br><strong>R$ ${repasse}</strong></div>
+           </div>
+         `;
+      });
+
    });
 }
 
@@ -372,10 +406,6 @@ async function gerarDashboard(){
 function loginDev(){ if(devUser.value==="dev" && devPass.value==="dev123"){ carregarEditor(); openTab('painelDev'); } else alert("Acesso negado"); }
 function carregarEditor(){ editTitulo.value=localStorage.getItem("txtTitulo")||"HospedaConde"; editSubtitulo.value=localStorage.getItem("txtSubtitulo")||"Encontre sua hospedagem em Conde - BA"; editHoteis.value=localStorage.getItem("txtHoteisTitulo")||"Hospedagens disponíveis"; editTurismo.value=localStorage.getItem("txtTurismoTitulo")||"Turismo em Conde"; editBotao.value=localStorage.getItem("txtBotaoBusca")||"Buscar"; editRodape.value=localStorage.getItem("txtRodape")||"© 2026 HospedaConde • SISTEMA EM DESENVOLVIMENTO"; }
 function salvarEdicoes(){ localStorage.setItem("txtTitulo",editTitulo.value); localStorage.setItem("txtSubtitulo",editSubtitulo.value); localStorage.setItem("txtHoteisTitulo",editHoteis.value); localStorage.setItem("txtTurismoTitulo",editTurismo.value); localStorage.setItem("txtBotaoBusca",editBotao.value); localStorage.setItem("txtRodape",editRodape.value); alert("Alterações salvas!"); window.location.reload(); }
-
-// ==== EXCLUIR HOTEL ====
-function atualizarListaExcluirHotel(){ let sel=listaExcluirHotel; sel.innerHTML=''; let lista=JSON.parse(localStorage.getItem("hoteisCadastrados")||"[]"); lista.forEach((h,i)=>{ let opt=document.createElement('option'); opt.value=i; opt.text=h.nome; sel.add(opt); }); }
-function excluirHotelSelecionado(){ let idx=listaExcluirHotel.value; let lista=JSON.parse(localStorage.getItem("hoteisCadastrados")||"[]"); if(idx!==""){ lista.splice(idx,1); localStorage.setItem("hoteisCadastrados",JSON.stringify(lista)); atualizarListaExcluirHotel(); listaHoteis.innerHTML=''; lista.forEach(h=>adicionarHotelNaLista(h)); msgExcluirHotel.innerText="Hotel excluído!"; }}
 
 // ==== TURISMO ====
 function cadastrarTurismo(){ let nome=turNome.value, desc=turDescricao.value, link=turImagemLink.value, file=turImagemUpload.files[0]; if(!nome){msgTurismoCad.innerText="Informe o nome"; return;} if(file){let r=new FileReader(); r.onload=e=>salvarTurismo(nome,desc,e.target.result); r.readAsDataURL(file);} else salvarTurismo(nome,desc,link||'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg'); }
