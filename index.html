@@ -426,9 +426,10 @@ function salvarLogo(){
 }
 
 // ==== CARREGAR SALVOS AO ABRIR ====
+// ==== CARREGAR SALVOS AO ABRIR ====
 window.onload = function(){
 
-    // Textos e logo (permanece igual)
+    // Textos e logo
     let logoSalva = localStorage.getItem("logoSite"); 
     if(logoSalva){
         logoTopo.src = logoSalva; 
@@ -442,16 +443,8 @@ window.onload = function(){
     if(localStorage.getItem("txtBotaoBusca")) txtBotaoBusca.innerText = localStorage.getItem("txtBotaoBusca");
     if(localStorage.getItem("txtRodape")) txtRodape.innerText = localStorage.getItem("txtRodape");
 
-    // TURISMO (permanece igual)
     carregarTurismoSalvo();
-
-    // 🔥 ESPERA FIREBASE CARREGAR
-    const esperarFirebase = setInterval(()=>{
-        if(window.db){
-            clearInterval(esperarFirebase);
-            carregarHoteisFirebase();
-        }
-    },100);
+    carregarHoteisFirebase();
 };
 
 </script>
