@@ -275,13 +275,27 @@ function adicionarHotelNaLista(h){
     card.innerHTML=`<img src="${h.imagem}"><div class="card-content"><h3 style="cursor:pointer;color:#0071c2" onclick="abrirDetalheHotel('${h.nome}','${h.imagem}','${h.quartos}','${h.beneficios}')">${h.nome}</h3><p class="price">R$ ${h.preco} / noite</p><button onclick="openModal('${h.nome}',${h.preco})">Simular reserva</button></div>`;
     listaHoteis.appendChild(card);
 }
-function cadastrarHotel(){
-    let nome=hotelNomeCad.value, preco=hotelPreco.value, quartos=hotelQuartos.value, beneficios=hotelBeneficios.value, link=hotelImagemLink.value, file=hotelImagemUpload.files[0];
-    if(!nome||!preco){msgCadastro.innerText="Preencha nome e preço."; return;}
-    if(file){let r=new FileReader(); r.onload=e=>salvarHotel(nome,preco,quartos,beneficios,e.target.result); r.readAsDataURL(file);} 
-    else salvarHotel(nome,preco,quartos,beneficios,link||'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg');
-}
+<script>
 
+function cadastrarHotel() {
+
+  const hotel = {
+    nome: document.getElementById("nomeHotel").value,
+    preco: document.getElementById("precoHotel").value,
+    vagas: document.getElementById("vagasHotel").value,
+    beneficios: document.getElementById("beneficiosHotel").value,
+    imagem: document.getElementById("linkImagem").value || ""
+  };
+
+  window.db.collection("hoteis").add(hotel)
+    .then(()=> {
+        alert("Hotel cadastrado com sucesso!");
+        carregarHoteisFirebase();
+    })
+    .catch((erro)=>{
+        alert("Erro ao cadastrar: " + erro);
+    });
+}
 async function salvarHotel(nome, preco, quartos, beneficios, imagem){
   await addDoc(collection(db, "hoteisCadastrados"), {
     nome,
