@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>HospedaConde | Turismo & Hospedagem</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{ font-family:'Inter',sans-serif; background:#f3f6fb; color:#222; }
+header{ background:linear-gradient(90deg,#003580,#0059b3); color:#fff; padding:18px 40px; position:sticky; top:0; z-index:100; box-shadow:0 4px 15px rgba(0,0,0,.15); }
+header h1{ font-size:26px; font-weight:700; display:flex; align-items:center; justify-content:space-between }
+header h1 img{ max-height:55px; border-radius:6px; }
+nav{margin-top:8px}
+nav a{ color:#fff; margin-right:18px; text-decoration:none; font-size:14px; font-weight:500; cursor:pointer }
+nav a:hover{border-bottom:2px solid #fff;padding-bottom:3px}
+section{display:none} 
+section.active{display:block}
+.hero{ background:url('https://bahia.ws/wp-content/uploads/2020/05/Sitio-do-Conde.jpg') center/cover no-repeat; height:420px; display:flex; align-items:center; }
+.hero-box{ background:#ffffffee; margin-left:40px; padding:30px; border-radius:14px; max-width:900px; box-shadow:0 10px 30px rgba(0,0,0,.25) }
+.hero-box h2{font-size:26px;font-weight:700}
+.search{ margin-top:15px; display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:10px }
+.search input,.search button{ padding:12px; border-radius:8px; border:1px solid #ccc; font-size:14px }
+.search button{ background:#0071c2; color:#fff; border:none; font-weight:600; cursor:pointer }
+.search button:hover{background:#005fa3}
+.container{max-width:1150px;margin:auto;padding:50px 20px}
+.grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px }
+.card{ background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 6px 16px rgba(0,0,0,.12); transition:.3s; }
+.card:hover{transform:translateY(-4px)}
+.card img{width:100%;height:190px;object-fit:cover}
+.card-content{padding:15px}
+.price{color:#0071c2;font-weight:700}
+.card button{ background:#0071c2; border:none; color:#fff; padding:11px; width:100%; border-radius:8px; font-weight:600; cursor:pointer; margin-top:10px }
+.card button:hover{background:#005fa3}
+.login-box{ background:#fff; padding:30px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.12); max-width:420px; margin:auto }
+.login-box input{ width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc }
+.stat{ background:#fff; padding:22px; border-radius:10px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,.1); font-size:16px; font-weight:600 }
+.modal{ display:none; position:fixed; top:0;left:0; width:100%;height:100%; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:200 }
+.modal-box{ background:#fff; padding:25px; border-radius:12px; width:90%; max-width:420px }
+.modal-box input, .modal-box button{ width:100%; margin:6px 0; padding:10px; border-radius:6px; border:1px solid #ccc; font-size:14px }
+.modal-box button{ border:none; background:#0071c2; color:#fff; font-weight:600; cursor:pointer }
+.modal-box button:hover{background:#005fa3}
+#boxDisponibilidade{ display:none; margin-top:10px; padding:10px; border:1px solid #0071c2; border-radius:6px; }
+.editor-box textarea,input{ width:100%; margin:6px 0; padding:10px; border-radius:6px; border:1px solid #ccc }
+.editor-box button{ background:#0071c2; color:#fff; border:none; padding:12px; width:100%; border-radius:8px; font-weight:600 }
+footer{ background:#0d1b2a; color:#ccc; text-align:center; padding:20px; font-size:14px; margin-top:40px }
+#areaPagamento{display:none;margin-top:10px}
+</style>
+</head>
+<body>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    deleteDoc, 
+    doc 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAGJmiUtTwIEMZftkvbTJHrjibrSGtqk9A",
+    authDomain: "hospedaconde.firebaseapp.com",
+    projectId: "hospedaconde",
+    storageBucket: "hospedaconde.firebasestorage.app",
+    messagingSenderId: "744736055664",
+    appId: "1:744736055664:web:02ea35988593c8a99bafb5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 🔹 DISPONIBILIZA DB GLOBALMENTE
+  window.db = db;
+  window.collection = collection;
+  window.addDoc = addDoc;
+  window.getDocs = getDocs;
+  window.deleteDoc = deleteDoc;
+  window.doc = doc;
+</script>
+
+<header>
+<h1 id="txtTitulo">
+   <span id="tituloTexto">HospedaConde</span>
+   <img id="logoTopo" style="display:none;">
+</h1>
+
+<nav>
+<a onclick="openTab('inicio')">Início</a>
+<a onclick="openTab('hoteis')">Hotéis</a>
+<a onclick="openTab('turismo')">Turismo</a>
+<a onclick="openTab('login')">Área Restrita</a>
+<a onclick="openTab('loginDev')">Desenvolvedor</a>
+</nav>
+</header>
+
+<!-- SECTIONS -->
+<section id="inicio" class="active">
+<div class="hero">
+<div class="hero-box">
+<h2 id="txtSubtitulo">Encontre sua hospedagem em Conde - BA</h2>
+<div class="search">
+<input id="destinoBusca" placeholder="Destino">
+<input id="checkin" type="date">
+<input id="checkout" type="date">
+<button id="txtBotaoBusca" onclick="buscarHospedagem()">Buscar</button>
+</div>
+<p id="msgBusca" style="margin-top:10px;color:#0071c2;font-weight:bold"></p>
+</div>
+</div>
+</section>
+
+<section id="hoteis">
+<div class="container">
+<h2 id="txtHoteisTitulo">Hospedagens disponíveis</h2>
+<div class="grid" id="listaHoteis"></div>
+</div>
+</section>
+
+<section id="detalheHotel">
+<div class="container">
+<button onclick="openTab('hoteis')">← Voltar</button>
+<h2 id="detHotelNome"></h2>
+<img id="detHotelImg" style="width:100%;max-height:400px;object-fit:cover;border-radius:10px;margin:15px 0">
+<p><strong>Quantidade de quartos:</strong> <span id="detHotelQuartos"></span></p>
+<p><strong>Benefícios:</strong></p>
+<p id="detHotelBeneficios"></p>
+</div>
+</section>
+
+<section id="turismo">
+<div class="container">
+<h2 id="txtTurismoTitulo">Turismo em Conde</h2>
+<div class="grid" id="listaTurismo"></div>
+</div>
+</section>
+
+<section id="detalhePraia">
+<div class="container">
+<button onclick="openTab('turismo')">← Voltar</button>
+<h2 id="detNomePraia"></h2>
+<img id="detImgPraia" style="width:100%;max-height:400px;object-fit:cover;border-radius:10px;margin:15px 0">
+<p id="detDescPraia"></p>
+</div>
+</section>
+
+<section id="login">
+<div class="container login-box">
+<h2>Área Restrita</h2>
+<input id="user" placeholder="Usuário">
+<input id="pass" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+</div>
+</section>
+
+<section id="dashboard">
+<div class="container">
+<h2>Painel Administrativo</h2>
+<div id="dashConteudo"></div>
+</div>
+</section>
+
+<section id="loginDev">
+<div class="container login-box">
+<h2>Login Desenvolvedor</h2>
+<input id="devUser" placeholder="Usuário">
+<input id="devPass" type="password" placeholder="Senha">
+<button onclick="loginDev()">Entrar</button>
+</div>
+</section>
+
+<section id="painelDev">
+<div class="container editor-box">
+<h2>Painel do Desenvolvedor</h2>
+
+<label>Título do Site</label>
+<textarea id="editTitulo"></textarea>
+<label>Subtítulo Principal</label>
+<textarea id="editSubtitulo"></textarea>
+<label>Título Hotéis</label>
+<textarea id="editHoteis"></textarea>
+<label>Título Turismo</label>
+<textarea id="editTurismo"></textarea>
+<label>Texto Botão Buscar</label>
+<textarea id="editBotao"></textarea>
+<label>Texto Rodapé</label>
+<textarea id="editRodape"></textarea>
+<button onclick="salvarEdicoes()">Salvar Alterações</button>
+
+<hr style="margin:30px 0">
+<h3>🖼️ Logomarca do Site</h3>
+<input type="file" id="logoUpload" accept="image/*">
+<button onclick="salvarLogo()">Salvar Logomarca</button>
+<p id="msgLogo"></p>
+
+<hr style="margin:30px 0">
+<h3>➕ Cadastro de Hotéis</h3>
+<input id="hotelNomeCad" placeholder="Nome do Hotel">
+<input id="hotelPreco" placeholder="Preço por noite">
+<input id="hotelQuartos" placeholder="Quantidade de quartos">
+<textarea id="hotelBeneficios" placeholder="Benefícios do hotel"></textarea>
+<input id="hotelImagemLink" placeholder="Link da imagem (opcional)">
+<input type="file" id="hotelImagemUpload" accept="image/*">
+<button onclick="cadastrarHotel()">Cadastrar Hotel</button>
+<p id="msgCadastro"></p>
+
+<hr style="margin:30px 0">
+<h3>🗑️ Excluir Hotel Cadastrado</h3>
+<select id="listaExcluirHotel"></select>
+<button onclick="excluirHotelSelecionado()" style="background:#c0392b">Excluir Hotel Selecionado</button>
+<p id="msgExcluirHotel"></p>
+
+<hr style="margin:30px 0">
+<h3>➕ Cadastro de Praia / Local Turístico</h3>
+<input id="turNome" placeholder="Nome do Local Turístico">
+<textarea id="turDescricao" placeholder="Descrição detalhada"></textarea>
+<input id="turImagemLink" placeholder="Link da imagem (opcional)">
+<input type="file" id="turImagemUpload" accept="image/*">
+<button onclick="cadastrarTurismo()">Cadastrar Local</button>
+<p id="msgTurismoCad"></p>
+
+</div>
+</section>
+
+<!-- MODAL SIMULAR RESERVA -->
+<div class="modal" id="modal">
+<div class="modal-box">
+<h3 id="hotelNome"></h3>
+<input type="number" id="noites" placeholder="Quantidade de noites">
+<button onclick="calcular()">Calcular valor</button>
+<p id="resultado"></p>
+<button id="btnDisponibilidade" style="display:none" onclick="mostrarDisponibilidade()">Ver Disponibilidade</button>
+<div id="boxDisponibilidade">
+<p>Quarto Standard: <span id="precoStandard"></span></p>
+<p>Quarto Deluxe: <span id="precoDeluxe"></span></p>
+<button onclick="reservarAgora()">Reservar Agora</button>
+</div>
+<button id="btnPagamento" style="display:none" onclick="mostrarPagamento()">Avançar pagamento</button>
+<div id="areaPagamento">
+<button onclick="pagarPix()">PIX</button>
+<button onclick="pagarCartao()">Cartão</button>
+<div id="pagamentoDetalhe"></div>
+</div>
+</div>
+</div>
+
+<footer>
+<span id="txtRodape">© 2026 HospedaConde • SISTEMA EM DESENVOLVIMENTO</span>
+</footer>
+
+<script>
+// ==== NAVEGAÇÃO ====
+function openTab(id){document.querySelectorAll('section').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active');}
+
+// ==== BUSCA ====
+function buscarHospedagem(){ if(!destinoBusca.value||!checkin.value||!checkout.value){msgBusca.innerText="Preencha destino e datas."; return;} msgBusca.innerText="Buscando hospedagens..."; openTab('hoteis'); }
+
+// ==== LOGIN PREFEITURA ====
+function login(){ if(user.value==='prefeitura' && pass.value==='123456'){ gerarDashboard(); openTab('dashboard'); } else alert("Usuário ou senha inválidos"); }
+
+// ==== MODAL RESERVA ====
+let precoAtual=0, totalCalculado=0;
+function openModal(nome,preco){
+    precoAtual=preco;
+    hotelNome.innerText=nome;
+    resultado.innerText='';
+    noites.value='';
+    btnPagamento.style.display='none';
+    areaPagamento.style.display='none';
+    btnDisponibilidade.style.display='none';
+    boxDisponibilidade.style.display='none';
+    modal.style.display='flex';
+}
+modal.onclick=e=>{if(e.target.id==='modal') modal.style.display='none';}
+function calcular(){ if(noites.value>0){ totalCalculado=noites.value*precoAtual; resultado.innerText="Total: R$ "+totalCalculado; btnDisponibilidade.style.display='block'; boxDisponibilidade.style.display='none'; areaPagamento.style.display='none'; } }
+function mostrarDisponibilidade(){ precoStandard.innerText="R$ "+totalCalculado; precoDeluxe.innerText="R$ "+(totalCalculado+200); boxDisponibilidade.style.display='block'; }
+function reservarAgora(){ boxDisponibilidade.style.display='none'; btnPagamento.style.display='block'; }
+function mostrarPagamento(){ areaPagamento.style.display='block'; }
+function pagarPix(){ pagamentoDetalhe.innerHTML="<p>QR Code PIX</p><img src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=HOSPEDACONDEPIX'>"; }
+function pagarCartao(){ pagamentoDetalhe.innerHTML="<input placeholder='Número do cartão'><input placeholder='Nome no cartão'><button onclick=\"alert('Pagamento aprovado!')\">Finalizar</button>"; }
+
+// ==== HOTÉIS ====
+function adicionarHotelNaLista(h){
+    let card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<img src="${h.imagem}"><div class="card-content"><h3 style="cursor:pointer;color:#0071c2" onclick="abrirDetalheHotel('${h.nome}','${h.imagem}','${h.quartos}','${h.beneficios}')">${h.nome}</h3><p class="price">R$ ${h.preco} / noite</p><button onclick="openModal('${h.nome}',${h.preco})">Simular reserva</button></div>`;
+    listaHoteis.appendChild(card);
+}
+function cadastrarHotel(){
+    let nome=hotelNomeCad.value, preco=hotelPreco.value, quartos=hotelQuartos.value, beneficios=hotelBeneficios.value, link=hotelImagemLink.value, file=hotelImagemUpload.files[0];
+    if(!nome||!preco){msgCadastro.innerText="Preencha nome e preço."; return;}
+    if(file){let r=new FileReader(); r.onload=e=>salvarHotel(nome,preco,quartos,beneficios,e.target.result); r.readAsDataURL(file);} 
+    else salvarHotel(nome,preco,quartos,beneficios,link||'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg');
+}
+
+async function salvarHotel(nome, preco, quartos, beneficios, imagem){
+  await addDoc(collection(db, "hoteisCadastrados"), {
+    nome,
+    preco,
+    quartos,
+    beneficios,
+    imagem
+  });
+
+  adicionarHotelNaLista({nome, preco, quartos, beneficios, imagem});
+  msgCadastro.innerText = "Hotel cadastrado com sucesso!";
+  atualizarListaExcluirHotel();
+}
+
+async function carregarHoteisFirebase(){
+  listaHoteis.innerHTML = '';
+  listaExcluirHotel.innerHTML = '';
+
+  const querySnapshot = await getDocs(collection(db, "hoteisCadastrados"));
+
+  querySnapshot.forEach((docu)=>{
+     let h = docu.data();
+     h.id = docu.id;
+     adicionarHotelNaLista(h);
+
+     let opt = document.createElement("option");
+     opt.value = docu.id;
+     opt.text = h.nome;
+     listaExcluirHotel.add(opt);
+  });
+}
+
+async function excluirHotelSelecionado(){
+   let id = listaExcluirHotel.value;
+   if(!id) return;
+
+   await deleteDoc(doc(db,"hoteisCadastrados",id));
+
+   msgExcluirHotel.innerText="Hotel excluído!";
+   carregarHoteisFirebase();
+}
+
+
+function abrirDetalheHotel(nome,img,q,b){ detHotelNome.innerText=nome; detHotelImg.src=img; detHotelQuartos.innerText=q||"Não informado"; detHotelBeneficios.innerText=b||"Não informado"; openTab('detalheHotel'); }
+
+// ==== DASHBOARD ====
+async function gerarDashboard(){
+   dashConteudo.innerHTML = '';
+
+   const querySnapshot = await getDocs(collection(db,"hoteisCadastrados"));
+
+   querySnapshot.forEach((docu)=>{
+      let h = docu.data();
+
+      // (mantém exatamente seu layout atual)
+      let reservas = Math.floor(Math.random()*20)+5;
+      let hospedes = Math.floor(Math.random()*60)+10;
+      let total = Math.floor(Math.random()*10000)+3000;
+      let repasse = (total*0.1).toFixed(2);
+
+      dashConteudo.innerHTML += `
+        <h3 style="margin-top:30px">${h.nome}</h3>
+        <div class="grid">
+          <div class="stat">📅 Reservas<br><strong>${reservas}</strong></div>
+          <div class="stat">👥 Hóspedes<br><strong>${hospedes}</strong></div>
+          <div class="stat">💰 Total<br><strong>R$ ${total}</strong></div>
+          <div class="stat">🏛️ Repasse Prefeitura<br><strong>R$ ${repasse}</strong></div>
+        </div>
+      `;
+   });
+}
+
+// ==== LOGIN DEV ====
+function loginDev(){ if(devUser.value==="dev" && devPass.value==="dev123"){ carregarEditor(); openTab('painelDev'); } else alert("Acesso negado"); }
+function carregarEditor(){ editTitulo.value=localStorage.getItem("txtTitulo")||"HospedaConde"; editSubtitulo.value=localStorage.getItem("txtSubtitulo")||"Encontre sua hospedagem em Conde - BA"; editHoteis.value=localStorage.getItem("txtHoteisTitulo")||"Hospedagens disponíveis"; editTurismo.value=localStorage.getItem("txtTurismoTitulo")||"Turismo em Conde"; editBotao.value=localStorage.getItem("txtBotaoBusca")||"Buscar"; editRodape.value=localStorage.getItem("txtRodape")||"© 2026 HospedaConde • SISTEMA EM DESENVOLVIMENTO"; }
+function salvarEdicoes(){ localStorage.setItem("txtTitulo",editTitulo.value); localStorage.setItem("txtSubtitulo",editSubtitulo.value); localStorage.setItem("txtHoteisTitulo",editHoteis.value); localStorage.setItem("txtTurismoTitulo",editTurismo.value); localStorage.setItem("txtBotaoBusca",editBotao.value); localStorage.setItem("txtRodape",editRodape.value); alert("Alterações salvas!"); window.location.reload(); }
+
+// ==== EXCLUIR HOTEL ====
+function atualizarListaExcluirHotel(){ let sel=listaExcluirHotel; sel.innerHTML=''; let lista=JSON.parse(localStorage.getItem("hoteisCadastrados")||"[]"); lista.forEach((h,i)=>{ let opt=document.createElement('option'); opt.value=i; opt.text=h.nome; sel.add(opt); }); }
+function excluirHotelSelecionado(){ let idx=listaExcluirHotel.value; let lista=JSON.parse(localStorage.getItem("hoteisCadastrados")||"[]"); if(idx!==""){ lista.splice(idx,1); localStorage.setItem("hoteisCadastrados",JSON.stringify(lista)); atualizarListaExcluirHotel(); listaHoteis.innerHTML=''; lista.forEach(h=>adicionarHotelNaLista(h)); msgExcluirHotel.innerText="Hotel excluído!"; }}
+
+// ==== TURISMO ====
+function cadastrarTurismo(){ let nome=turNome.value, desc=turDescricao.value, link=turImagemLink.value, file=turImagemUpload.files[0]; if(!nome){msgTurismoCad.innerText="Informe o nome"; return;} if(file){let r=new FileReader(); r.onload=e=>salvarTurismo(nome,desc,e.target.result); r.readAsDataURL(file);} else salvarTurismo(nome,desc,link||'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg'); }
+function salvarTurismo(nome,desc,imagem){ let lista=JSON.parse(localStorage.getItem("turismoCadastrado")||"[]"); lista.push({nome,desc,imagem}); localStorage.setItem("turismoCadastrado",JSON.stringify(lista)); carregarTurismoSalvo(); msgTurismoCad.innerText="Local cadastrado!"; }
+function carregarTurismoSalvo(){ let grid=listaTurismo; grid.innerHTML=''; let lista=JSON.parse(localStorage.getItem("turismoCadastrado")||"[]"); lista.forEach(t=>{ let card=document.createElement('div'); card.className='card'; card.innerHTML=`<img src="${t.imagem}"><div class="card-content"><h3 style="cursor:pointer;color:#0071c2" onclick="abrirDetalhePraia('${t.nome}','${t.imagem}','${t.desc}')">${t.nome}</h3></div>`; grid.appendChild(card); }); }
+function abrirDetalhePraia(nome,img,desc){ detNomePraia.innerText=nome; detImgPraia.src=img; detDescPraia.innerText=desc; openTab('detalhePraia'); }
+
+// ==== LOGO (salvar) ====
+function salvarLogo(){
+    let file=logoUpload.files[0];
+    if(!file){ msgLogo.innerText="Selecione um arquivo"; return; }
+    let r=new FileReader();
+    r.onload=e=>{
+        logoTopo.src=e.target.result;
+        logoTopo.style.display='block';
+        localStorage.setItem("logoSite",e.target.result);
+        msgLogo.innerText="Logo atualizada!";
+    };
+    r.readAsDataURL(file);
+}
+
+// ==== CARREGAR SALVOS AO ABRIR ====
+window.onload=function(){
+    let logoSalva=localStorage.getItem("logoSite"); if(logoSalva){logoTopo.src=logoSalva; logoTopo.style.display='block';}
+    if(localStorage.getItem("txtTitulo")) tituloTexto.innerText=localStorage.getItem("txtTitulo");
+    if(localStorage.getItem("txtSubtitulo")) txtSubtitulo.innerText=localStorage.getItem("txtSubtitulo");
+    if(localStorage.getItem("txtHoteisTitulo")) txtHoteisTitulo.innerText=localStorage.getItem("txtHoteisTitulo");
+    if(localStorage.getItem("txtTurismoTitulo")) txtTurismoTitulo.innerText=localStorage.getItem("txtTurismoTitulo");
+    if(localStorage.getItem("txtBotaoBusca")) txtBotaoBusca.innerText=localStorage.getItem("txtBotaoBusca");
+    if(localStorage.getItem("txtRodape")) txtRodape.innerText=localStorage.getItem("txtRodape");
+
+    // HOTÉIS
+    let hoteis=JSON.parse(localStorage.getItem("hoteisCadastrados")||"[]"); listaHoteis.innerHTML=''; hoteis.forEach(h=>adicionarHotelNaLista(h)); atualizarListaExcluirHotel();
+
+    // TURISMO
+    carregarTurismoSalvo();
+};
+</script>
+
+</body>
+</html>
